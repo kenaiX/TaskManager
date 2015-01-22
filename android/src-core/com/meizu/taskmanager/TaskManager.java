@@ -2,22 +2,24 @@ package com.meizu.taskmanager;
 
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.GL30;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 
 public class TaskManager implements ApplicationListener {
-    SpriteBatch batch;
-    Texture img;
-    Sprite sprite;
+    private Stage stage;
+    private FirstActor firstActor;
+
     @Override
     public void create() {
-        batch = new SpriteBatch();
-        img = new Texture(Gdx.files.internal("badlogic.jpg"));
-        sprite=new Sprite(img, 80, 80, 400, 300);
-        sprite.setPosition(10, 10); //位置
-        sprite.setRotation(15); //旋转
+        stage = new Stage();
+        firstActor = new FirstActor();
+        stage.addActor(firstActor);
+        Gdx.input.setInputProcessor(stage);
     }
 
     @Override
@@ -27,11 +29,9 @@ public class TaskManager implements ApplicationListener {
 
     @Override
     public void render() {
-        Gdx.gl.glClearColor(1, 0, 0, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        batch.begin();
-        sprite.draw(batch);
-        batch.end();
+        Gdx.gl.glClear(GL30.GL_COLOR_BUFFER_BIT);
+        stage.act(Gdx.graphics.getDeltaTime());
+        stage.draw();
     }
 
     @Override
@@ -46,6 +46,23 @@ public class TaskManager implements ApplicationListener {
 
     @Override
     public void dispose() {
-
+        stage.dispose();
     }
+}
+class FirstActor extends Actor {
+    Texture texture;
+    public FirstActor() {
+        texture = new Texture(Gdx.files.internal("music.jpg"));
+    }
+
+    @Override
+    public void draw(Batch batch, float parentAlpha) {
+        super.draw(batch, parentAlpha);
+        Sprite sprite=new Sprite(texture);
+        sprite.setPosition(10, 10); //位置
+        sprite.setRotation(15);
+
+        batch.draw(sprite, sprite.getX(), sprite.getY());
+    }
+
 }
