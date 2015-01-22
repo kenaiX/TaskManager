@@ -6,19 +6,19 @@ import com.badlogic.gdx.graphics.GL30;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 
 public class TaskManager implements ApplicationListener {
     private Stage stage;
     private FirstActor firstActor;
-
     @Override
     public void create() {
         stage = new Stage();
         firstActor = new FirstActor();
         stage.addActor(firstActor);
+        firstActor.setX(20);
+        firstActor.setY(20);
         Gdx.input.setInputProcessor(stage);
     }
 
@@ -49,20 +49,20 @@ public class TaskManager implements ApplicationListener {
         stage.dispose();
     }
 }
+
 class FirstActor extends Actor {
-    Texture texture;
+    Sprite sprite;
+
     public FirstActor() {
-        texture = new Texture(Gdx.files.internal("music.jpg"));
+        final Texture texture = new Texture(Gdx.files.internal("music.jpg"));
+        sprite = new Sprite(texture);
+        sprite.setPosition(10, 10);
+        sprite.setRotation(15);
     }
 
     @Override
     public void draw(Batch batch, float parentAlpha) {
-        super.draw(batch, parentAlpha);
-        Sprite sprite=new Sprite(texture);
-        sprite.setPosition(10, 10); //位置
-        sprite.setRotation(15);
-
-        batch.draw(sprite, sprite.getX(), sprite.getY());
+        sprite.draw(batch);
     }
 
 }
