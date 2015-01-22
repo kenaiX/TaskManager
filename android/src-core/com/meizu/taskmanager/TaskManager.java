@@ -58,6 +58,7 @@ class FirstActor extends Actor {
         sprite = new Sprite(texture);
         sprite.setPosition(10, 10);
         sprite.setRotation(15);
+        sprite.setScale(0.6f);
     }
 
     @Override
