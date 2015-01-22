@@ -4,16 +4,20 @@ import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 public class TaskManager implements ApplicationListener {
     SpriteBatch batch;
     Texture img;
-
+    Sprite sprite;
     @Override
     public void create() {
         batch = new SpriteBatch();
         img = new Texture(Gdx.files.internal("badlogic.jpg"));
+        sprite=new Sprite(img, 80, 80, 400, 300);
+        sprite.setPosition(10, 10); //位置
+        sprite.setRotation(15); //旋转
     }
 
     @Override
@@ -26,7 +30,7 @@ public class TaskManager implements ApplicationListener {
         Gdx.gl.glClearColor(1, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         batch.begin();
-        batch.draw(img, 0, 0);
+        sprite.draw(batch);
         batch.end();
     }
 

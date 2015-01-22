@@ -28,26 +28,12 @@ allprojects {
     }
 }
 
-//project(":desktop") {
-//    apply plugin: "java"
-//
-//
-//    dependencies {
-//        compile project(":core")
-//        compile "com.badlogicgames.gdx:gdx-backend-lwjgl:$gdxVersion"
-//        compile "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
-//        compile "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop"
-//        compile "com.badlogicgames.gdx:gdx-tools:$gdxVersion"
-//    }
-//}
-
 project(":android") {
     apply plugin: "android"
 
     configurations { natives }
 
     dependencies {
-        compile project(":core")
         compile "com.badlogicgames.gdx:gdx-backend-android:$gdxVersion"
         natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi"
         natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi-v7a"
@@ -56,15 +42,7 @@ project(":android") {
         natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-armeabi"
         natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-armeabi-v7a"
         natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-x86"
-    }
-}
-
-project(":core") {
-    apply plugin: "java"
-
-    dependencies {
         compile "com.badlogicgames.gdx:gdx:$gdxVersion"
-        compile "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
     }
 }
 
