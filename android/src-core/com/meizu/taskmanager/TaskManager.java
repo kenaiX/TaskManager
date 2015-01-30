@@ -3,39 +3,30 @@ package com.meizu.taskmanager;
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL30;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.input.GestureDetector;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.actions.MoveByAction;
+import com.badlogic.gdx.scenes.scene2d.actions.RemoveActorAction;
+import com.badlogic.gdx.scenes.scene2d.utils.ActorGestureListener;
+import com.meizu.taskmanager.policy.ManagerService;
 
 public class TaskManager implements ApplicationListener {
-    private TaskStage stage;
-    private TaskActor[] taskActor;
+    private Stage stage;
 
     @Override
     public void create() {
-        stage = new TaskStage();
-        taskActor = new TaskActor[3];
-        taskActor[0] = new TaskActor(new Texture("music.jpg"));
-        taskActor[1] = new TaskActor(new Texture("vedio.jpg"));
-        taskActor[2] = new TaskActor(new Texture("weather.jpg"));
-
-        for (int i = 0; i < taskActor.length; i++) {
-            stage.addActor(taskActor[i]);
-            if (i > 0) {
-                taskActor[i].setX(taskActor[i].getWidth() * i);
-            }
-        }
-        Gdx.input.setInputProcessor(new GestureDetector(stageGestureListener));
+        stage = new Stage();
+        Gdx.graphics.setContinuousRendering(true);
+        Gdx.input.setInputProcessor(stage);
     }
 
     @Override
     public void resize(int width, int height) {
-
+        pause();
+        resume();
     }
 
     @Override
@@ -47,98 +38,80 @@ public class TaskManager implements ApplicationListener {
 
     @Override
     public void pause() {
-
+        stage.clear();
     }
 
     @Override
     public void resume() {
+        final TaskItem[] taskItems = ManagerService.getTaskItem();
+        final TaskActor[] taskActor = new TaskActor[taskItems.length];
+        for (int i = 0; i < taskActor.length; i++) {
+            taskActor[i] = new TaskActor(taskItems[i]);
+        }
+        HorizontalGroup verticalGroup = new HorizontalGroup();
+        verticalGroup.space(50);
+        for (int i = 0; i < taskActor.length; i++) {
+            verticalGroup.addActor(taskActor[i]);
+        }
+        ScrollPane mScrollPane = new ScrollPane(verticalGroup);
+        mScrollPane.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        mScrollPane.setY((Gdx.graphics.getHeight() - mScrollPane.getHeight()) / 2);
+        mScrollPane.setForceScroll(true, false);
+        stage.addActor(mScrollPane);
+
 
     }
 
     @Override
     public void dispose() {
         stage.dispose();
+        stage = null;
     }
 
-    GestureDetector.GestureListener stageGestureListener = new GestureDetector.GestureListener() {
-        @Override
-        public boolean touchDown(float x, float y, int pointer, int button) {
-            return true;
+    class TaskActor extends Actor {
+        Sprite mSprite;
+
+        TaskActor(TaskItem item) {
+            addCaptureListener(actorGestureListener);
+
+            final float zoom = Gdx.graphics.getWidth() * 0.6f / item.getScreenShot().getWidth();
+
+            mSprite = new Sprite(item.getScreenShot());
+            mSprite.setSize(mSprite.getWidth() * zoom, mSprite.getHeight() * zoom);
+            setWidth(mSprite.getWidth());
+            setHeight(mSprite.getHeight());
         }
 
         @Override
-        public boolean tap(float x, float y, int count, int button) {
-            return false;
+        public void draw(Batch batch, float parentAlpha) {
+            mSprite.setPosition(getX(), getY());
+            mSprite.draw(batch);
         }
 
-        @Override
-        public boolean longPress(float x, float y) {
-            return false;
-        }
+        ActorGestureListener actorGestureListener = new ActorGestureListener() {
+            boolean catchFocus;
 
-        @Override
-        public boolean fling(float velocityX, float velocityY, int button) {
-            return false;
-        }
+            @Override
+            public void pan(InputEvent event, float x, float y, float deltaX, float deltaY) {
+                Stage stage = getStage();
+                if (!catchFocus && Math.abs(deltaX) < Math.abs(deltaY)) {
+                    catchFocus = true;
+                    if (stage != null)
+                        stage.cancelTouchFocusExcept(actorGestureListener, TaskActor.this);
+                }
+                if (catchFocus) {
+                    MoveByAction moveByAction = new MoveByAction();
+                    moveByAction.setAmountY(deltaY);
+                    addAction(moveByAction);
+                }
+            }
 
-        @Override
-        public boolean pan(float x, float y, float deltaX, float deltaY) {
-            Vector3 position = stage.getCamera().position;
-            position.add(-deltaX, 0, 0);
-            stage.getCamera().update();
-            return false;
-        }
+            @Override
+            public void fling(InputEvent event, float velocityX, float velocityY, int button) {
+                addAction(new RemoveActorAction());
+                super.fling(event, velocityX, velocityY, button);
+            }
+        };
 
-        @Override
-        public boolean panStop(float x, float y, int pointer, int button) {
-            return false;
-        }
-
-        @Override
-        public boolean zoom(float initialDistance, float distance) {
-            return false;
-        }
-
-        @Override
-        public boolean pinch(Vector2 initialPointer1, Vector2 initialPointer2, Vector2 pointer1, Vector2 pointer2) {
-            return false;
-        }
-    };
-
-}
-
-class TaskStage extends Stage {
-//    @Override
-//    public float getWidth() {
-//        float width=0f;
-//        Array<Actor> actors = getActors();
-//        for(Actor actor :actors){
-//            width+=actor.getWidth();
-//        }
-//        return width;
-//    }
-}
-
-class TaskActor extends Actor {
-    Sprite sprite;
-
-    public TaskActor(Texture texture) {
-        sprite = new Sprite(texture);
-        sprite.setScale(0.6f);
-    }
-
-    @Override
-    public void draw(Batch batch, float parentAlpha) {
-        sprite.draw(batch);
-    }
-
-    @Override
-    public float getWidth() {
-        return sprite.getWidth();
-    }
-
-    @Override
-    public void setX(float x) {
-        sprite.setPosition(x, 0);
     }
 }
