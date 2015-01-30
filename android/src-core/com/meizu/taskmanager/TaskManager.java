@@ -3,6 +3,7 @@ package com.meizu.taskmanager;
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL30;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -10,17 +11,20 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.MoveByAction;
 import com.badlogic.gdx.scenes.scene2d.actions.RemoveActorAction;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.utils.ActorGestureListener;
 import com.meizu.taskmanager.policy.ManagerService;
 
 public class TaskManager implements ApplicationListener {
     private Stage stage;
+    Texture background;
 
     @Override
     public void create() {
         stage = new Stage();
         Gdx.graphics.setContinuousRendering(true);
         Gdx.input.setInputProcessor(stage);
+        background = new Texture("launcher.png");
     }
 
     @Override
@@ -43,6 +47,9 @@ public class TaskManager implements ApplicationListener {
 
     @Override
     public void resume() {
+        Image image = new Image(background);
+        image.setSize(stage.getWidth(), stage.getHeight());
+        stage.addActor(new Image(background));
         final TaskItem[] taskItems = ManagerService.getTaskItem();
         final TaskActor[] taskActor = new TaskActor[taskItems.length];
         for (int i = 0; i < taskActor.length; i++) {
@@ -54,9 +61,11 @@ public class TaskManager implements ApplicationListener {
             verticalGroup.addActor(taskActor[i]);
         }
         ScrollPane mScrollPane = new ScrollPane(verticalGroup);
+        mScrollPane.setFlingTime(0.5f);
         mScrollPane.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         mScrollPane.setY((Gdx.graphics.getHeight() - mScrollPane.getHeight()) / 2);
         mScrollPane.setForceScroll(true, false);
+        mScrollPane.scrollX(taskActor[1].getX()+taskActor[1].getWidth()-stage.getWidth()/2);
         stage.addActor(mScrollPane);
 
 

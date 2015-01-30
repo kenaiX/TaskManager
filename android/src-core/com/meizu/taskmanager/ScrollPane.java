@@ -76,7 +76,7 @@ public class ScrollPane extends WidgetGroup {
     float velocityX, velocityY;
     float flingTimer;
     private boolean overscrollX = true, overscrollY = true;
-    float flingTime = 1f;
+    float flingTime = 0.5f;
     private float overscrollDistance = 50, overscrollSpeedMin = 30, overscrollSpeedMax = 200;
     private boolean forceScrollX, forceScrollY;
     private boolean disableX, disableY;
