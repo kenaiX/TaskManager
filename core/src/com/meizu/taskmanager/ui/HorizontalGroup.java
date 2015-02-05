@@ -14,17 +14,17 @@
  * limitations under the License.
  ******************************************************************************/
 
-package com.meizu.taskmanager;
+package com.meizu.taskmanager.ui;
 
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Touchable;
-import com.badlogic.gdx.scenes.scene2d.actions.RotateByAction;
 import com.badlogic.gdx.scenes.scene2d.actions.TemporalAction;
 import com.badlogic.gdx.scenes.scene2d.ui.WidgetGroup;
 import com.badlogic.gdx.scenes.scene2d.utils.Align;
 import com.badlogic.gdx.scenes.scene2d.utils.Layout;
 import com.badlogic.gdx.utils.SnapshotArray;
+import com.meizu.taskmanager.PagerStage;
 
 /** A group that lays out its children side by side in a single row. This can be easier than using {@link com.badlogic.gdx.scenes.scene2d.ui.Table} when actors need
  * to be inserted in the middle of the group.
@@ -177,7 +177,8 @@ public class HorizontalGroup extends WidgetGroup {
         @Override
         protected void end() {
             super.end();
-            invalidateHierarchy();
+            layout();
+            ((PagerStage) getStage()).updateRect();
             mChildChangeAction=null;
         }
     }

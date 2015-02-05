@@ -14,7 +14,7 @@
  * limitations under the License.
  ******************************************************************************/
 
-package com.meizu.taskmanager;
+package com.meizu.taskmanager.ui;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
@@ -281,7 +281,7 @@ public class ScrollPane extends WidgetGroup {
     }
 
     /** Returns the scroll pane's style. Modifying the returned style may not have an effect until
-     * {@link #setStyle(com.meizu.taskmanager.ScrollPane.ScrollPaneStyle)} is called. */
+     * {@link #setStyle(ScrollPane.ScrollPaneStyle)} is called. */
     public ScrollPaneStyle getStyle () {
         return style;
     }
@@ -1064,7 +1064,7 @@ public class ScrollPane extends WidgetGroup {
             return super.toString() + ": " + widget.toString();
     }
 
-    /** The style for a scroll pane, see {@link com.meizu.taskmanager.ScrollPane}.
+    /** The style for a scroll pane, see {@link ScrollPane}.
      * @author mzechner
      * @author Nathan Sweet */
     static public class ScrollPaneStyle {

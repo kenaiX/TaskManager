@@ -2,28 +2,38 @@ package com.meizu.taskmanager;
 
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.GL30;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.input.GestureDetector;
+import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.MoveByAction;
-import com.badlogic.gdx.scenes.scene2d.actions.RemoveActorAction;
-import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.actions.MoveToAction;
 import com.badlogic.gdx.scenes.scene2d.utils.ActorGestureListener;
 import com.meizu.taskmanager.policy.ManagerService;
+import com.meizu.taskmanager.ui.HorizontalGroup;
+
 
 public class TaskManager implements ApplicationListener {
-    private Stage stage;
+    private PagerStage stage;
     Texture background;
+    private SpriteBatch batch;
 
     @Override
     public void create() {
-        stage = new Stage();
+        batch = new SpriteBatch();
+        stage = new PagerStage();
+
         Gdx.graphics.setContinuousRendering(true);
-        Gdx.input.setInputProcessor(stage);
+
+        InputMultiplexer multiplexer = new InputMultiplexer(new GestureDetector(stage.flickScrollListener), stage);
+        Gdx.input.setInputProcessor(multiplexer);
         background = new Texture("launcher.png");
     }
 
@@ -36,6 +46,10 @@ public class TaskManager implements ApplicationListener {
     @Override
     public void render() {
         Gdx.gl.glClear(GL30.GL_COLOR_BUFFER_BIT);
+
+        batch.begin();
+        batch.draw(background, 0, 0);
+        batch.end();
         stage.act(Gdx.graphics.getDeltaTime());
         stage.draw();
     }
@@ -47,27 +61,19 @@ public class TaskManager implements ApplicationListener {
 
     @Override
     public void resume() {
-        Image image = new Image(background);
-        image.setSize(stage.getWidth(), stage.getHeight());
-        stage.addActor(new Image(background));
-        final TaskItem[] taskItems = ManagerService.getTaskItem();
-        final TaskActor[] taskActor = new TaskActor[taskItems.length];
-        for (int i = 0; i < taskActor.length; i++) {
-            taskActor[i] = new TaskActor(taskItems[i]);
-        }
-        HorizontalGroup verticalGroup = new HorizontalGroup();
-        verticalGroup.space(50);
-        for (int i = 0; i < taskActor.length; i++) {
-            verticalGroup.addActor(taskActor[i]);
-        }
-        ScrollPane mScrollPane = new ScrollPane(verticalGroup);
-        mScrollPane.setFlingTime(0.5f);
-        mScrollPane.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        mScrollPane.setY((Gdx.graphics.getHeight() - mScrollPane.getHeight()) / 2);
-        mScrollPane.setForceScroll(true, false);
-        mScrollPane.scrollX(taskActor[1].getX()+taskActor[1].getWidth()-stage.getWidth()/2);
-        stage.addActor(mScrollPane);
 
+        HorizontalGroup mGroup = new HorizontalGroup();
+        mGroup.space(50f);
+        mGroup.setBounds(0, 0, stage.getWidth(), stage.getHeight());
+        final TaskItem[] taskItems = ManagerService.getTaskItem();
+        for (int i = 0; i < taskItems.length; i++) {
+            mGroup.addActor(new TaskActor(taskItems[i]));
+        }
+        mGroup.layout();
+        stage.addActor(mGroup);
+        stage.bindGroup(mGroup);
+        stage.updateRect();
+        stage.init();
 
     }
 
@@ -77,7 +83,7 @@ public class TaskManager implements ApplicationListener {
         stage = null;
     }
 
-    class TaskActor extends Actor {
+    public class TaskActor extends Actor {
         Sprite mSprite;
 
         TaskActor(TaskItem item) {
@@ -99,6 +105,7 @@ public class TaskManager implements ApplicationListener {
 
         ActorGestureListener actorGestureListener = new ActorGestureListener() {
             boolean catchFocus;
+            float speed;
 
             @Override
             public void pan(InputEvent event, float x, float y, float deltaX, float deltaY) {
@@ -116,11 +123,49 @@ public class TaskManager implements ApplicationListener {
             }
 
             @Override
+            public void touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                speed = 0;
+                if (getOriginY() == 0) {
+                    setOriginY(getY());
+                }
+                super.touchDown(event, x, y, pointer, button);
+            }
+
+            @Override
+            public void touchUp(InputEvent event, float x, float y, int pointer, int button) {
+
+                if ((Math.abs(speed) <= 150 && speed != 0) || (speed == 0 && getY() != getOriginY())) {
+                    MoveToAction moveToAction = new MoveToAction();
+                    moveToAction.setPosition(getX(), getOriginY());
+                    moveToAction.setDuration(0.5f);
+                    addAction(moveToAction);
+                }
+                super.touchUp(event, x, y, pointer, button);
+            }
+
+            @Override
             public void fling(InputEvent event, float velocityX, float velocityY, int button) {
-                addAction(new RemoveActorAction());
+                speed = velocityY;
+
+                if (Math.abs(speed) > 150) {
+                    addAction(new RemoveTaskAction());
+                } else {
+                    MoveToAction moveToAction = new MoveToAction();
+                    moveToAction.setPosition(getX(), getOriginY());
+                    moveToAction.setDuration(0.3f);
+                    addAction(moveToAction);
+                }
                 super.fling(event, velocityX, velocityY, button);
             }
         };
 
+
+        public class RemoveTaskAction extends Action {
+
+            public boolean act(float delta) {
+                target.remove();
+                return true;
+            }
+        }
     }
 }
