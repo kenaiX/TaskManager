@@ -9,22 +9,50 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.TemporalAction;
 import com.badlogic.gdx.utils.SnapshotArray;
+import com.google.common.eventbus.Subscribe;
 import com.meizu.taskmanager.ui.HorizontalGroup;
+import com.meizu.taskmanager.utils.action.CancelableAction;
 import com.meizu.taskmanager.utils.animation.FloatEvaluator;
+import com.meizu.taskmanager.utils.eventbus.EventBusUtil;
 
 
 public class PagerStage extends Stage {
 
+    public final static class UpdateRectEvent {
+    }
+
+    public final static class Rect {
+        public final float x;
+        public final float y;
+        public final float width;
+        public final float height;
+        public final float center;
+
+        public Rect(float x, float y, float width, float height) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+            this.center = x + width / 2;
+        }
+
+        @Override
+        public String toString() {
+            return "Rect{" +
+                    "center=" + center +
+                    '}';
+        }
+    }
 
     public GestureDetector.GestureListener flickScrollListener;
 
-    float mCameraPosition;
-
-    HorizontalGroup mGroup;
+    private Rect[] mRect;
+    private float mCameraPosition;
+    private HorizontalGroup mGroup;
+    private CancelableAction mMoveCameraAction;
 
     public PagerStage() {
         super();
-        Gdx.app.debug("tt", "init");
         mCameraPosition = getCamera().position.x;
         flickScrollListener = new GestureDetector.GestureListener() {
             short focusThis;
@@ -32,6 +60,7 @@ public class PagerStage extends Stage {
             @Override
             public boolean touchDown(float x, float y, int pointer, int button) {
                 focusThis = 0;
+                cancelMoveIfNeed();
                 return false;
             }
 
@@ -77,7 +106,7 @@ public class PagerStage extends Stage {
             @Override
             public boolean panStop(float x, float y, int pointer, int button) {
                 if (focusThis == 1) {
-                    addAction(new ScrollCameraAction(0.5f, Interpolation.linear).setToPotion(calm(mCameraPosition)));
+                    addAction(new ScrollCameraAction(0.2f, Interpolation.linear).setToPotion(calm(mCameraPosition)));
                     return true;
                 } else {
                     return false;
@@ -95,33 +124,18 @@ public class PagerStage extends Stage {
             }
         };
 
+        EventBusUtil.getDefaultEventBus().register(this);
+
+    }
+
+    @Override
+    public void dispose() {
+        super.dispose();
+        EventBusUtil.getDefaultEventBus().unregister(this);
     }
 
     public void bindGroup(HorizontalGroup group) {
         mGroup = group;
-    }
-
-    public static class Rect {
-        public final float x;
-        public final float y;
-        public final float width;
-        public final float height;
-        public final float center;
-
-        public Rect(float x, float y, float width, float height) {
-            this.x = x;
-            this.y = y;
-            this.width = width;
-            this.height = height;
-            this.center = x + width / 2;
-        }
-
-        @Override
-        public String toString() {
-            return "Rect{" +
-                    "center=" + center +
-                    '}';
-        }
     }
 
     public float calm(float toPotion) {
@@ -137,7 +151,10 @@ public class PagerStage extends Stage {
         return reFloat;
     }
 
-    private Rect[] mRect;
+    @Subscribe
+    public void updateRect(UpdateRectEvent event) {
+        updateRect();
+    }
 
     public void updateRect() {
         SnapshotArray<Actor> children = mGroup.getChildren();
@@ -152,28 +169,40 @@ public class PagerStage extends Stage {
 
         float calm = calm(mCameraPosition);
         if (calm != mCameraPosition)
-            addAction(new ScrollCameraAction(0.5f, Interpolation.linear).setToPotion(calm));
+            addAction(new ScrollCameraAction(0.2f, Interpolation.linear).setToPotion(calm));
     }
 
     public void init() {
         addAction(new MoveCameraAction().setOffset(mRect[0].center - mCameraPosition));
     }
 
-    public void updateCameraToPotion(float toPotion) {
+    private void updateCameraToPotion(float toPotion) {
         mCameraPosition = toPotion;
         getCamera().position.set(mCameraPosition, Gdx.graphics.getHeight() / 2, getCamera().position.z);
         getCamera().update();
     }
 
-    public void updateCameraOffset(float x) {
+    private void updateCameraOffset(float x) {
         mCameraPosition += x;
         getCamera().position.set(mCameraPosition, Gdx.graphics.getHeight() / 2, getCamera().position.z);
         getCamera().update();
     }
 
-    class MoveCameraAction extends Action {
+
+    private void cancelMoveIfNeed(){
+        if (mMoveCameraAction != null) {
+            mMoveCameraAction.cancel();
+        }
+    }
+
+    private class MoveCameraAction extends Action {
 
         private float offset;
+
+        public MoveCameraAction() {
+            super();
+            cancelMoveIfNeed();
+        }
 
         public MoveCameraAction setOffset(float offset) {
             this.offset = offset;
@@ -185,11 +214,19 @@ public class PagerStage extends Stage {
             updateCameraOffset(offset);
             return true;
         }
+
     }
 
-    class ScrollCameraAction extends TemporalAction {
+    private class ScrollCameraAction extends TemporalAction implements CancelableAction {
 
         FloatEvaluator floatEvaluator = new FloatEvaluator();
+
+        @Override
+        protected void end() {
+            if (mMoveCameraAction == this) mMoveCameraAction = null;
+        }
+
+        private boolean alive = true;
 
         private float toPotion;
 
@@ -197,6 +234,8 @@ public class PagerStage extends Stage {
 
         ScrollCameraAction(float duration, Interpolation interpolation) {
             super(duration, interpolation);
+            cancelMoveIfNeed();
+            mMoveCameraAction = this;
         }
 
 
@@ -209,7 +248,13 @@ public class PagerStage extends Stage {
 
         @Override
         protected void update(float percent) {
+            if (!alive) return;
             updateCameraToPotion(floatEvaluator.evaluate(percent, originPotion, toPotion));
+        }
+
+        @Override
+        public void cancel() {
+            alive = false;
         }
     }
 }

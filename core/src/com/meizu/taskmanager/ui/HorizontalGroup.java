@@ -24,7 +24,9 @@ import com.badlogic.gdx.scenes.scene2d.ui.WidgetGroup;
 import com.badlogic.gdx.scenes.scene2d.utils.Align;
 import com.badlogic.gdx.scenes.scene2d.utils.Layout;
 import com.badlogic.gdx.utils.SnapshotArray;
+import com.google.common.eventbus.EventBus;
 import com.meizu.taskmanager.PagerStage;
+import com.meizu.taskmanager.utils.eventbus.EventBusUtil;
 
 /** A group that lays out its children side by side in a single row. This can be easier than using {@link com.badlogic.gdx.scenes.scene2d.ui.Table} when actors need
  * to be inserted in the middle of the group.
@@ -178,8 +180,10 @@ public class HorizontalGroup extends WidgetGroup {
         protected void end() {
             super.end();
             layout();
-            ((PagerStage) getStage()).updateRect();
-            mChildChangeAction=null;
+
+
+            EventBusUtil.getDefaultEventBus().post(new PagerStage.UpdateRectEvent());
+                    mChildChangeAction=null;
         }
     }
 
