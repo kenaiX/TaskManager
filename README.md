@@ -6,7 +6,7 @@
 
 初步规则如下：
 
-1、优先在桌面应用的模式下进行调试，效率大幅提升（cd desktop && gradle run）；
+1、优先在桌面应用的模式下进行调试，效率大幅提升（cd desktop && gradle runDesktop）；
 
 2、所有的代码放于core目录下；
 
